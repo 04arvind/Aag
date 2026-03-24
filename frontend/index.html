@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Fire Detection System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap"
+    rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <style>
+    :root {
+      --fire-red: #ff2200;
+      --fire-orange: #ff6600;
+      --fire-amber: #ffaa00;
+      --safe-green: #00ff88;
+      --bg-void: #060608;
+      --bg-deep: #0a0a0f;
+      --bg-panel: rgba(12, 12, 20, 0.85);
+      --glass-border: rgba(255, 100, 0, 0.15);
+      --glass-border-safe: rgba(0, 255, 136, 0.15);
+      --text-primary: #e8e4d8;
+      --text-dim: #7a7068;
+      --scan-line: rgba(255, 80, 0, 0.03);
+      --glow-red: 0 0 30px rgba(255, 34, 0, 0.4), 0 0 60px rgba(255, 34, 0, 0.2);
+      --glow-green: 0 0 30px rgba(0, 255, 136, 0.3);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--bg-void);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, var(--scan-line) 2px, var(--scan-line) 4px);
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9998;
+      opacity: 0.4;
+    }
+
+    @keyframes pulse-ring {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      100% {
+        transform: scale(1.8);
+        opacity: 0;
+      }
+    }
+
+    @keyframes fire-shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      10% {
+        transform: translateX(-6px) rotate(-1deg);
+      }
+
+      20% {
+        transform: translateX(6px) rotate(1deg);
+      }
+
+      30% {
+        transform: translateX(-5px);
+      }
+
+      40% {
+        transform: translateX(5px);
+      }
+
+      50% {
+        transform: translateX(-3px);
+      }
+
+      60% {
+        transform: translateX(3px);
+      }
+    }
+
+    @keyframes fire-flash {
+
+      0%,
+      100% {
+        opacity: 0;
+      }
+
+      50% {
+        opacity: 0.18;
+      }
+    }
+
+    @keyframes blink-text {
+
+      0%,
+      49% {
+        opacity: 1;
+      }
+
+      50%,
+      100% {
+        opacity: 0.1;
+      }
+    }
+
+    @keyframes radar-spin {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes fade-in-up {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes hero-entrance {
+      from {
+        opacity: 0;
+        transform: scale(0.95) translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    @keyframes pulse-dot {
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      50% {
+        transform: scale(1.5);
+        opacity: 0.7;
+      }
+    }
+
+    @keyframes ticker {
+      0% {
+        transform: translateX(100%);
+      }
+
+      100% {
+        transform: translateX(-100%);
+      }
+    }
+
+    .landing {
+      min-height: 100vh;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .landing-bg {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at 20% 80%, rgba(255, 60, 0, 0.08) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(255, 140, 0, 0.05) 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, rgba(10, 5, 0, 0.5) 0%, var(--bg-void) 100%);
+    }
+
+    .grid-bg {
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(255, 80, 0, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 80, 0, 0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse at 50% 50%, black 30%, transparent 80%);
+    }
+
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(to bottom, rgba(6, 6, 8, 0.9), transparent);
+      backdrop-filter: blur(10px);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: 'Orbitron', monospace;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 3px;
+      color: var(--fire-orange);
+      text-transform: uppercase;
+    }
+
+    .nav-logo-icon {
+      width: 32px;
+      height: 32px;
+      position: relative;
+    }
+
+    .nav-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: var(--safe-green);
+      letter-spacing: 2px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--safe-green);
+      animation: pulse-dot 2s infinite;
+    }
+
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      text-align: center;
+      padding: 120px 40px 80px;
+      position: relative;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 80, 0, 0.1);
+      border: 1px solid rgba(255, 80, 0, 0.3);
+      border-radius: 100px;
+      padding: 6px 16px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--fire-orange);
+      margin-bottom: 32px;
+      animation: fade-in-up 0.8s ease both;
+    }
+
+    .hero-title {
+      font-family: 'Orbitron', monospace;
+      font-weight: 900;
+      font-size: clamp(36px, 6vw, 80px);
+      line-height: 1.0;
+      letter-spacing: -1px;
+      animation: hero-entrance 1s ease 0.2s both;
+      max-width: 900px;
+    }
+
+    .hero-title .fire-word {
+      color: transparent;
+      background: linear-gradient(135deg, var(--fire-red), var(--fire-orange), var(--fire-amber));
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      font-size: 18px;
+      font-weight: 300;
+      color: var(--text-dim);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-top: 20px;
+      margin-bottom: 48px;
+      animation: fade-in-up 0.8s ease 0.5s both;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .cta-button {
+      position: relative;
+      background: linear-gradient(135deg, var(--fire-red), var(--fire-orange));
+      border: none;
+      border-radius: 4px;
+      padding: 18px 48px;
+      font-family: 'Orbitron', monospace;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 4px;
+      color: white;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: all 0.3s ease;
+      animation: fade-in-up 0.8s ease 0.8s both;
+      overflow: hidden;
+    }
+
+    .cta-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 40px rgba(255, 80, 0, 0.5);
+    }
+
+    .cta-button span {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 48px;
+      margin-top: 64px;
+      animation: fade-in-up 0.8s ease 1s both;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--fire-orange);
+    }
+
+    .stat-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .stat-divider {
+      width: 1px;
+      background: rgba(255, 80, 0, 0.2);
+      align-self: stretch;
+    }
+
+    .features {
+      padding: 80px 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .section-tag {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 4px;
+      color: var(--fire-orange);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+    }
+
+    .feature-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 32px 28px;
+      backdrop-filter: blur(20px);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      cursor: default;
+    }
+
+    .feature-card:hover {
+      border-color: rgba(255, 100, 0, 0.35);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      background: rgba(255, 80, 0, 0.1);
+      border: 1px solid rgba(255, 80, 0, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 20px;
+    }
+
+    .feature-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--fire-orange);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .feature-desc {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text-dim);
+      font-weight: 300;
+    }
+
+    .dashboard {
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .dash-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      background: var(--bg-panel);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(20px);
+    }
+
+    .dash-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: var(--fire-orange);
+      text-transform: uppercase;
+    }
+
+    .back-btn {
+      background: rgba(255, 80, 0, 0.1);
+      border: 1px solid rgba(255, 80, 0, 0.3);
+      color: var(--fire-orange);
+      padding: 8px 20px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    .back-btn:hover {
+      background: rgba(255, 80, 0, 0.2);
+    }
+
+    .dash-grid {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 20px;
+      flex: 1;
+    }
+
+    @media (max-width: 900px) {
+      .dash-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .camera-panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      overflow: hidden;
+      backdrop-filter: blur(20px);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-label {
+      padding: 14px 20px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--text-dim);
+      border-bottom: 1px solid rgba(255, 80, 0, 0.1);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-transform: uppercase;
+    }
+
+    .rec-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--fire-red);
+      animation: pulse-dot 1s infinite;
+    }
+
+    .camera-wrapper {
+      position: relative;
+      flex: 1;
+      min-height: 400px;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .camera-wrapper video,
+    .camera-wrapper canvas {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .camera-wrapper canvas {
+      position: absolute;
+      inset: 0;
+    }
+
+    .camera-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .camera-overlay::before,
+    .camera-overlay::after {
+      content: '';
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      border-color: var(--fire-orange);
+      border-style: solid;
+      opacity: 0.6;
+    }
+
+    .camera-overlay::before {
+      top: 16px;
+      left: 16px;
+      border-width: 2px 0 0 2px;
+    }
+
+    .camera-overlay::after {
+      bottom: 16px;
+      right: 16px;
+      border-width: 0 2px 2px 0;
+    }
+
+    .corner-tr,
+    .corner-bl {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      border-color: var(--fire-orange);
+      border-style: solid;
+      opacity: 0.6;
+    }
+
+    .corner-tr {
+      top: 16px;
+      right: 16px;
+      border-width: 2px 2px 0 0;
+    }
+
+    .corner-bl {
+      bottom: 16px;
+      left: 16px;
+      border-width: 0 0 2px 2px;
+    }
+
+    .fire-flash-overlay {
+      position: absolute;
+      inset: 0;
+      background: var(--fire-red);
+      pointer-events: none;
+      animation: fire-flash 0.5s infinite;
+      display: none;
+    }
+
+    .fire-flash-overlay.active {
+      display: block;
+    }
+
+    .no-camera-msg {
+      text-align: center;
+      color: var(--text-dim);
+    }
+
+    .no-camera-msg .icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .no-camera-msg p {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 2px;
+    }
+
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .status-card {
+      background: var(--bg-panel);
+      border-radius: 8px;
+      overflow: hidden;
+      backdrop-filter: blur(20px);
+      transition: all 0.3s ease;
+    }
+
+    .status-card.safe {
+      border: 1px solid var(--glass-border-safe);
+    }
+
+    .status-card.fire {
+      border: 1px solid rgba(255, 34, 0, 0.5);
+      animation: fire-shake 0.5s ease-in-out infinite;
+      box-shadow: var(--glow-red);
+    }
+
+    .status-card-inner {
+      padding: 24px;
+    }
+
+    .status-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .status-orb {
+      position: relative;
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .status-orb-inner {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      position: relative;
+      z-index: 1;
+    }
+
+    .status-orb-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      animation: pulse-ring 1.5s ease-out infinite;
+    }
+
+    .status-orb.safe .status-orb-inner {
+      background: var(--safe-green);
+    }
+
+    .status-orb.safe .status-orb-ring {
+      background: var(--safe-green);
+    }
+
+    .status-orb.fire .status-orb-inner {
+      background: var(--fire-red);
+    }
+
+    .status-orb.fire .status-orb-ring {
+      background: var(--fire-red);
+    }
+
+    .status-text-main {
+      font-family: 'Orbitron', monospace;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .status-text-main.safe {
+      color: var(--safe-green);
+    }
+
+    .status-text-main.fire {
+      color: var(--fire-red);
+      animation: blink-text 0.6s step-end infinite;
+      text-shadow: var(--glow-red);
+    }
+
+    .fire-banner {
+      background: var(--fire-red);
+      padding: 10px;
+      text-align: center;
+      font-family: 'Orbitron', monospace;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      color: white;
+      animation: blink-text 0.4s step-end infinite;
+      display: none;
+    }
+
+    .fire-banner.active {
+      display: block;
+    }
+
+    .metric-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      backdrop-filter: blur(20px);
+    }
+
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .metric-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+
+    .metric-value {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+
+    .confidence-bar-wrapper {
+      height: 4px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .confidence-bar {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.5s ease, background 0.5s ease;
+    }
+
+    .system-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      backdrop-filter: blur(20px);
+    }
+
+    .sys-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 80, 0, 0.06);
+    }
+
+    .sys-row:last-child {
+      border-bottom: none;
+    }
+
+    .sys-key {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+
+    .sys-val {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+    }
+
+    .sys-val.online {
+      color: var(--safe-green);
+    }
+
+    .sys-val.offline {
+      color: var(--fire-red);
+    }
+
+    .sys-val.neutral {
+      color: var(--text-primary);
+    }
+
+    .ticker-bar {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 80, 0, 0.1);
+      border-radius: 4px;
+      padding: 8px 0;
+      overflow: hidden;
+      position: relative;
+      margin-top: 4px;
+    }
+
+    .ticker-text {
+      white-space: nowrap;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--fire-orange);
+      animation: ticker 20s linear infinite;
+      display: inline-block;
+      padding: 0 20px;
+    }
+
+    .radar-container {
+      width: 80px;
+      height: 80px;
+      position: relative;
+      margin: 16px auto;
+    }
+
+    .radar-ring {
+      position: absolute;
+      inset: 0;
+      border: 1px solid rgba(0, 255, 136, 0.2);
+      border-radius: 50%;
+    }
+
+    .radar-ring:nth-child(2) {
+      inset: 15px;
+      border-color: rgba(0, 255, 136, 0.3);
+    }
+
+    .radar-ring:nth-child(3) {
+      inset: 30px;
+      border-color: rgba(0, 255, 136, 0.4);
+    }
+
+    .radar-sweep {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 50%;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(0, 255, 136, 0.8), transparent);
+      transform-origin: 0 50%;
+      animation: radar-spin 2s linear infinite;
+    }
+
+    .radar-sweep.fire-radar {
+      background: linear-gradient(90deg, rgba(255, 34, 0, 0.8), transparent);
+    }
+
+    .radar-dot {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 6px;
+      height: 6px;
+      background: var(--safe-green);
+      border-radius: 50%;
+    }
+
+    .radar-dot.fire {
+      background: var(--fire-red);
+    }
+
+    .backend-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1px;
+    }
+
+    .alert-log {
+      background: var(--bg-panel);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      backdrop-filter: blur(20px);
+      max-height: 130px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 80, 0, 0.3) transparent;
+    }
+
+    .log-entry {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1px;
+      padding: 3px 0;
+      border-bottom: 1px solid rgba(255, 80, 0, 0.05);
+      display: flex;
+      gap: 8px;
+    }
+
+    .log-time {
+      color: var(--text-dim);
+      flex-shrink: 0;
+    }
+
+    .log-msg-safe {
+      color: var(--safe-green);
+    }
+
+    .log-msg-fire {
+      color: var(--fire-red);
+    }
+
+    .log-msg-info {
+      color: var(--fire-orange);
+    }
+
+    .page-enter {
+      animation: hero-entrance 0.5s ease both;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback } = React;
+    const BACKEND_URL = 'http://localhost:8000';
+
+    function LandingPage({ onStart }) {
+      const features = [
+        { icon: '[SIG]', title: 'Real-Time Detection', desc: 'Processes live webcam frames every second with sub-200ms response time using optimized computer vision algorithms.' },
+        { icon: '[AI]', title: 'Smart AI Model', desc: 'Combines HSV color-space analysis with brightness validation and YOLO-ready architecture for accurate fire signatures.' },
+        { icon: '[ALM]', title: 'Instant Alarm System', desc: 'Multi-layered alert: audio alarm, full-screen flash overlay, shaking card animations, and blinking FIRE DETECTED banner.' },
+        { icon: '[FST]', title: 'Lightweight & Fast', desc: 'Zero-database architecture. Stateless backend. FastAPI async processing ensures minimal latency on any hardware.' }
+      ];
+
+      return (
+        <div className="landing">
+          <div className="landing-bg" />
+          <div className="grid-bg" />
+          <nav className="nav">
+            <div className="nav-logo">
+              <svg className="nav-logo-icon" viewBox="0 0 32 32" fill="none">
+                <path d="M16 2 C16 2, 24 8, 24 16 C24 24, 16 30, 16 30 C16 30, 8 24, 8 16 C8 8, 16 2, 16 2Z" fill="none" stroke="#ff6600" strokeWidth="1.5" />
+                <path d="M16 8 C16 8, 20 12, 20 16 C20 20, 16 26, 16 26 C16 26, 12 20, 12 16 C12 12, 16 8, 16 8Z" fill="#ff6600" opacity="0.6" />
+              </svg>
+              PYROWATCH
+            </div>
+            <div className="nav-status"><span className="status-dot" />SYSTEM ONLINE</div>
+          </nav>
+          <section className="hero">
+            <div className="hero-badge"><span className="status-dot" style={{ background: 'var(--fire-orange)' }} />POWERED BY COMPUTER VISION + DEEP LEARNING</div>
+            <h1 className="hero-title">AI <span className="fire-word">FIRE</span><br />DETECTION<br />SYSTEM</h1>
+            <p className="hero-subtitle">Real-Time Intelligent Fire Monitoring</p>
+            <button className="cta-button" onClick={onStart}><span>⬡ START MONITORING</span></button>
+            <div className="hero-stats">
+              <div className="stat-item"><div className="stat-value">1s</div><div className="stat-label">Detection Interval</div></div>
+              <div className="stat-divider" />
+              <div className="stat-item"><div className="stat-value">HSV</div><div className="stat-label">Detection Mode</div></div>
+              <div className="stat-divider" />
+              <div className="stat-item"><div className="stat-value">0ms</div><div className="stat-label">Storage Overhead</div></div>
+              <div className="stat-divider" />
+              <div className="stat-item"><div className="stat-value">24/7</div><div className="stat-label">Monitoring</div></div>
+            </div>
+          </section>
+          <section className="features">
+            <div className="section-header"><div className="section-tag">// CAPABILITIES</div><h2 className="section-title">SYSTEM FEATURES</h2></div>
+            <div className="features-grid">
+              {features.map((f, i) => (<div key={i} className="feature-card" style={{ animationDelay: `${i * 0.1}s` }}><div className="feature-icon">{f.icon}</div><div className="feature-title">{f.title}</div><p className="feature-desc">{f.desc}</p></div>))}
+            </div>
+          </section>
+        </div>
+      );
+    }
+
+    function Dashboard({ onBack }) {
+      const videoRef = useRef(null);
+      const canvasRef = useRef(null);
+      const audioRef = useRef(null);
+      const intervalRef = useRef(null);
+      const alarmPlayingRef = useRef(false);
+
+      const [cameraActive, setCameraActive] = useState(false);
+      const [cameraError, setCameraError] = useState(null);
+      const [fireDetected, setFireDetected] = useState(false);
+      const [confidence, setConfidence] = useState(0);
+      const [lastTimestamp, setLastTimestamp] = useState('--:--:--');
+      const [backendStatus, setBackendStatus] = useState('checking');
+      const [frameCount, setFrameCount] = useState(0);
+      const [logs, setLogs] = useState([{ time: getTime(), msg: 'System initialized', type: 'info' }, { time: getTime(), msg: 'Awaiting camera start', type: 'info' }]);
+      const [bbox, setBbox] = useState(null);
+      const [isMonitoring, setIsMonitoring] = useState(false);
+
+      function getTime() { return new Date().toLocaleTimeString('en-US', { hour12: false }); }
+
+      function addLog(msg, type = 'info') {
+        setLogs(prev => [{ time: getTime(), msg, type }, ...prev].slice(0, 20));
+      }
+
+      useEffect(() => {
+        const check = async () => {
+          try {
+            const r = await fetch(`${BACKEND_URL}/health`, { signal: AbortSignal.timeout(3000) });
+            if (r.ok) { setBackendStatus('online'); addLog('Backend API connected', 'info'); }
+            else { setBackendStatus('offline'); }
+          } catch { setBackendStatus('offline'); addLog('Backend offline — using demo mode', 'fire'); }
+        };
+        check();
+      }, []);
+
+      const startCamera = async () => {
+        try {
+          if (audioRef.current) {
+            audioRef.current.play().then(() => {
+              audioRef.current.pause();
+              audioRef.current.currentTime = 0;
+            }).catch(() => { });
+          }
+
+          let stream;
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'environment' }
+            });
+          } catch (e) {
+            // Fallback to default camera if environment camera fails
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: { width: { ideal: 1280 }, height: { ideal: 720 } }
+            });
+          }
+
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            videoRef.current.onloadedmetadata = () => {
+              videoRef.current.play().then(() => {
+                setCameraActive(true);
+                setCameraError(null);
+                addLog('Camera stream started', 'info');
+                setIsMonitoring(true);
+              }).catch(err => {
+                setCameraError('Failed to play: ' + err.message);
+                addLog('Play error: ' + err.message, 'fire');
+              });
+            };
+          }
+        } catch (err) {
+          setCameraError('Camera access denied: ' + err.message);
+          addLog('Camera error: ' + err.message, 'fire');
+        }
+      };
+
+      const stopCamera = () => {
+        if (videoRef.current?.srcObject) {
+          videoRef.current.srcObject.getTracks().forEach(t => t.stop());
+          videoRef.current.srcObject = null;
+        }
+        setCameraActive(false);
+        setIsMonitoring(false);
+        setFireDetected(false);
+        setConfidence(0);
+        clearInterval(intervalRef.current);
+        addLog('Monitoring stopped', 'info');
+      };
+
+      const captureAndDetect = useCallback(async () => {
+        if (!videoRef.current || !canvasRef.current) return;
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        if (video.readyState < 2) return;
+
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0);
+
+        if (bbox) {
+          const bx = bbox[0] * canvas.width, by = bbox[1] * canvas.height, bw = bbox[2] * canvas.width, bh = bbox[3] * canvas.height;
+          ctx.strokeStyle = '#ff2200'; ctx.lineWidth = 3; ctx.strokeRect(bx, by, bw, bh);
+          ctx.fillStyle = 'rgba(255, 34, 0, 0.2)'; ctx.fillRect(bx, by, bw, bh);
+          ctx.fillStyle = '#ff2200'; ctx.font = 'bold 14px Orbitron, monospace'; ctx.fillText('[!] FIRE', bx + 4, by - 6);
+        }
+
+        const frameData = canvas.toDataURL('image/jpeg', 0.7);
+        setFrameCount(f => f + 1);
+        setLastTimestamp(getTime());
+
+        try {
+          if (backendStatus === 'offline') {
+            const demoFire = Math.random() < 0.08;
+            const demoConf = demoFire ? 0.7 + Math.random() * 0.25 : Math.random() * 0.15;
+            handleDetectionResult(demoFire, demoConf, null);
+            return;
+          }
+          const resp = await fetch(`${BACKEND_URL}/detect`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ frame: frameData }), signal: AbortSignal.timeout(5000) });
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          const data = await resp.json();
+          handleDetectionResult(data.fire_detected, data.confidence, data.bbox);
+        } catch (err) { addLog('Detection error: ' + err.message, 'info'); }
+      }, [backendStatus, bbox]);
+
+      function handleDetectionResult(detected, conf, newBbox) {
+        setFireDetected(detected); setConfidence(conf); setBbox(newBbox);
+        if (detected) { addLog(`[!] FIRE DETECTED — ${(conf * 100).toFixed(1)}% confidence`, 'fire'); playAlarm(); }
+        else { stopAlarm(); }
+      }
+
+      function playAlarm() {
+        if (alarmPlayingRef.current) return;
+        if (audioRef.current) { audioRef.current.currentTime = 0; audioRef.current.play().catch(() => { }); alarmPlayingRef.current = true; }
+      }
+
+      function stopAlarm() {
+        if (audioRef.current && alarmPlayingRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; alarmPlayingRef.current = false; }
+      }
+
+      useEffect(() => {
+        if (cameraActive && isMonitoring) { intervalRef.current = setInterval(captureAndDetect, 1000); }
+        return () => clearInterval(intervalRef.current);
+      }, [cameraActive, isMonitoring, captureAndDetect]);
+
+      useEffect(() => { return () => { clearInterval(intervalRef.current); stopAlarm(); if (videoRef.current?.srcObject) videoRef.current.srcObject.getTracks().forEach(t => t.stop()); }; }, []);
+
+      const confPct = Math.round(confidence * 100);
+      const confColor = fireDetected ? '#ff2200' : confPct > 50 ? '#ffaa00' : '#00ff88';
+
+      return (
+        <div className="dashboard page-enter">
+          <audio ref={audioRef} loop preload="auto"><source src="./public/audio/pieper.mp3" type="audio/mpeg" /></audio>
+          <AudioFallback audioRef={audioRef} fireDetected={fireDetected} />
+          <div className="dash-header">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+              <button className="back-btn" onClick={() => { stopCamera(); onBack(); }}>← BACK</button>
+              <div className="dash-title">PYROWATCH DASHBOARD</div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+              <div className="backend-indicator">
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: backendStatus === 'online' ? 'var(--safe-green)' : backendStatus === 'offline' ? 'var(--fire-red)' : 'var(--fire-amber)', display: 'inline-block', animation: 'pulse-dot 2s infinite' }} />
+                <span style={{ color: backendStatus === 'online' ? 'var(--safe-green)' : 'var(--fire-amber)', fontFamily: 'Share Tech Mono', fontSize: 10, letterSpacing: 2 }}>API: {backendStatus.toUpperCase()}{backendStatus === 'offline' ? ' (DEMO)' : ''}</span>
+              </div>
+              <div style={{ fontFamily: 'Share Tech Mono', fontSize: 10, color: 'var(--text-dim)', letterSpacing: 2 }}>FRAMES: {frameCount}</div>
+            </div>
+          </div>
+          <div className="ticker-bar" style={{ marginBottom: 16 }}><span className="ticker-text">⬡ PYROWATCH ACTIVE — MONITORING ALL ZONES — HSV FIRE DETECTION ENGINE ONLINE — CONFIDENCE THRESHOLD: 20% — REAL-TIME PROCESSING AT 1Hz — NO DATABASE REQUIRED — ALARM READY &nbsp;&nbsp;&nbsp;⬡ PYROWATCH ACTIVE — MONITORING ALL ZONES</span></div>
+          <div className="dash-grid">
+            <div className="camera-panel">
+              <div className="panel-label"><span className="rec-dot" />LIVE FEED — CAMERA 01 {cameraActive && <span style={{ marginLeft: 'auto', color: 'var(--safe-green)' }}>● RECORDING</span>}</div>
+              <div className="camera-wrapper">
+                <div className={`fire-flash-overlay ${fireDetected ? 'active' : ''}`} />
+                <video ref={videoRef} muted playsInline style={{ position: 'relative', zIndex: 1, display: cameraActive ? 'block' : 'none' }} />
+                <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, zIndex: 2, display: cameraActive ? 'block' : 'none' }} />
+                {cameraActive ? (
+                  <div className="camera-overlay"><div className="corner-tr" /><div className="corner-bl" /></div>
+                ) : (
+                  <div className="no-camera-msg"><div className="icon" style={{ fontSize: '32px', fontFamily: 'Share Tech Mono' }}>[CAM]</div><p>{cameraError || 'CAMERA OFFLINE'}</p><p style={{ marginTop: 8, opacity: 0.5 }}>CLICK START TO INITIALIZE</p></div>
+                )}
+              </div>
+              <div style={{ padding: '14px 20px', display: 'flex', gap: 10, borderTop: '1px solid rgba(255,80,0,0.1)' }}>
+                {!cameraActive ? (<button className="cta-button" onClick={startCamera} style={{ padding: '10px 24px', fontSize: 11, letterSpacing: 3 }}><span>▶ START MONITORING</span></button>) : (<button className="back-btn" onClick={stopCamera} style={{ background: 'rgba(255,34,0,0.15)', borderColor: 'rgba(255,34,0,0.4)', color: 'var(--fire-red)' }}>■ STOP</button>)}
+                {cameraActive && <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'Share Tech Mono', fontSize: 10, color: 'var(--text-dim)', letterSpacing: 2 }}>LAST: {lastTimestamp}</div>}
+              </div>
+            </div>
+            <div className="right-panel">
+              <div className={`status-card ${fireDetected ? 'fire' : 'safe'}`}>
+                <div className={`fire-banner ${fireDetected ? 'active' : ''}`}>[!] FIRE DETECTED — EVACUATE IMMEDIATELY</div>
+                <div className="status-card-inner">
+                  <div className="status-label">// DETECTION STATUS</div>
+                  <div className="status-indicator">
+                    <div className={`status-orb ${fireDetected ? 'fire' : 'safe'}`}><div className="status-orb-ring" /><div className="status-orb-inner" /></div>
+                    <div className={`status-text-main ${fireDetected ? 'fire' : 'safe'}`}>{fireDetected ? '[!] FIRE DETECTED' : '[OK] NO FIRE DETECTED'}</div>
+                  </div>
+                  <div className="radar-container"><div className="radar-ring" /><div className="radar-ring" /><div className="radar-ring" /><div className={`radar-sweep ${fireDetected ? 'fire-radar' : ''}`} /><div className={`radar-dot ${fireDetected ? 'fire' : ''}`} /></div>
+                </div>
+              </div>
+              <div className="metric-card">
+                <div className="metric-row"><span className="metric-label">CONFIDENCE</span><span className="metric-value" style={{ color: confColor }}>{confPct}%</span></div>
+                <div className="confidence-bar-wrapper"><div className="confidence-bar" style={{ width: `${confPct}%`, background: confColor, boxShadow: `0 0 8px ${confColor}` }} /></div>
+                <div className="metric-row" style={{ marginTop: 14 }}><span className="metric-label">LAST SCAN</span><span className="metric-value">{lastTimestamp}</span></div>
+                <div className="metric-row"><span className="metric-label">SCAN INTERVAL</span><span className="metric-value">1.0s</span></div>
+                <div className="metric-row"><span className="metric-label">THRESHOLD</span><span className="metric-value">20%</span></div>
+              </div>
+              <div className="system-card">
+                <div className="metric-label" style={{ marginBottom: 8 }}>// SYSTEM STATUS</div>
+                <div className="sys-row"><span className="sys-key">BACKEND API</span><span className={`sys-val ${backendStatus === 'online' ? 'online' : 'offline'}`}>{backendStatus === 'online' ? '● ONLINE' : backendStatus === 'offline' ? '● OFFLINE (DEMO)' : '◌ CHECKING'}</span></div>
+                <div className="sys-row"><span className="sys-key">CAMERA</span><span className={`sys-val ${cameraActive ? 'online' : 'offline'}`}>{cameraActive ? '● ACTIVE' : '○ INACTIVE'}</span></div>
+                <div className="sys-row"><span className="sys-key">ALARM SYSTEM</span><span className="sys-val online">● READY</span></div>
+                <div className="sys-row"><span className="sys-key">DETECTION ENGINE</span><span className="sys-val neutral">HSV + YOLO-READY</span></div>
+                <div className="sys-row"><span className="sys-key">TOTAL FRAMES</span><span className="sys-val neutral">{frameCount}</span></div>
+              </div>
+              <div>
+                <div className="metric-label" style={{ marginBottom: 6, paddingLeft: 4 }}>// EVENT LOG</div>
+                <div className="alert-log">{logs.map((l, i) => (<div key={i} className="log-entry"><span className="log-time">[{l.time}]</span><span className={`log-msg-${l.type}`}>{l.msg}</span></div>))}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function AudioFallback({ audioRef, fireDetected }) {
+      const ctxRef = useRef(null);
+      const oscillatorsRef = useRef([]);
+      const fallbackActiveRef = useRef(false);
+
+      useEffect(() => {
+        if (fireDetected) {
+          const tryWebAudio = () => {
+            if (fallbackActiveRef.current) return;
+            try {
+              if (!ctxRef.current) ctxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+              const ctx = ctxRef.current;
+              if (ctx.state === 'suspended') ctx.resume();
+              const makeBeep = (freq, delay) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.type = 'sawtooth'; osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0, ctx.currentTime + delay);
+                gain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + delay + 0.05);
+                gain.gain.linearRampToValueAtTime(0, ctx.currentTime + delay + 0.4);
+                osc.start(ctx.currentTime + delay); osc.stop(ctx.currentTime + delay + 0.5);
+                oscillatorsRef.current.push(osc);
+              };
+              const playPattern = () => { if (!fallbackActiveRef.current) return; for (let i = 0; i < 3; i++) makeBeep(880, i * 0.2); setTimeout(playPattern, 800); };
+              fallbackActiveRef.current = true; playPattern();
+            } catch (e) { }
+          };
+          if (audioRef.current) { audioRef.current.addEventListener('error', tryWebAudio, { once: true }); audioRef.current.play().catch(() => tryWebAudio()); }
+          else tryWebAudio();
+        } else {
+          fallbackActiveRef.current = false; oscillatorsRef.current = [];
+          if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
+        }
+      }, [fireDetected]);
+      return null;
+    }
+
+    function App() {
+      const [page, setPage] = useState('landing');
+      return page === 'landing' ? <LandingPage onStart={() => setPage('dashboard')} /> : <Dashboard onBack={() => setPage('landing')} />;
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+
+</html>
