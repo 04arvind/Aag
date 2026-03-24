@@ -1,37 +1,37 @@
-# 🔥 PYROWATCH — AI Fire Detection System
+# Aag — AI Fire Detection System
 
 **Real-time intelligent fire monitoring using computer vision and deep learning.**
 
 ---
 
-## 📖 Overview
+## Overview
 
-**PyroWatch (Aag)** is a full-stack AI-powered fire detection system that uses your webcam to detect fire in real time. It combines a **FastAPI Python backend** for image analysis with a **pure-HTML/React frontend** for live monitoring. No database, no complex setup — just instant, stateless fire detection.
+**Aag** is a full-stack AI-powered fire detection system that uses your webcam to detect fire in real time. It combines a **FastAPI Python backend** for image analysis with a **pure-HTML/React frontend** for live monitoring. No database, no complex setup — just instant, stateless fire detection.
 
 The system uses **HSV (Hue-Saturation-Value) color-space analysis** to identify fire signatures in live video frames, with a brightness validation pass to reduce false positives. It is also **YOLO-ready**, meaning you can plug in a custom-trained YOLO model for even higher accuracy.
 
 ---
 
-## ✨ Features
+## Features
 
-- 🎥 **Live Webcam Feed** — Captures real-time video frames from your device's camera
-- 🔬 **HSV Fire Detection** — Detects red, orange, and yellow fire signatures using multi-range color thresholding and morphological cleanup
-- 🤖 **YOLO-Ready Architecture** — Easily switch to a custom YOLO model (e.g., `fire_model.pt`) for improved detection
-- 🔲 **Bounding Box Overlay** — Draws a red bounding box on the detected fire region in the live canvas feed
-- 📊 **Confidence Scoring** — Calculates and displays a real-time confidence percentage (scaled by fire area and brightness)
-- 🚨 **Multi-Layer Alert System**:
+- **Live Webcam Feed** — Captures real-time video frames from your device's camera
+- **HSV Fire Detection** — Detects red, orange, and yellow fire signatures using multi-range color thresholding and morphological cleanup
+- **YOLO-Ready Architecture** — Easily switch to a custom YOLO model (e.g., `fire_model.pt`) for improved detection
+- **Bounding Box Overlay** — Draws a red bounding box on the detected fire region in the live canvas feed
+- **Confidence Scoring** — Calculates and displays a real-time confidence percentage (scaled by fire area and brightness)
+- **Multi-Layer Alert System**:
   - 🔔 Audio alarm (`pieper.mp3`) with Web Audio API fallback
   - 🔴 Full-screen red flash overlay
   - 📳 Shaking card animation
   - 🚨 Blinking `FIRE DETECTED — EVACUATE IMMEDIATELY` banner
-- 📋 **Live Event Log** — Timestamped log of all detection events, camera states, and system messages
-- 🖥️ **System Status Dashboard** — Real-time indicators for backend API, camera, alarm, and detection engine status
-- 📡 **Demo Mode** — If the backend is offline, the frontend runs in probabilistic demo mode so you can still explore the UI
-- ⚡ **Zero-Overhead** — Stateless, no database, no session storage. Sub-200ms response time.
+- **Live Event Log** — Timestamped log of all detection events, camera states, and system messages
+- **System Status Dashboard** — Real-time indicators for backend API, camera, alarm, and detection engine status
+- **Demo Mode** — If the backend is offline, the frontend runs in probabilistic demo mode so you can still explore the UI
+- **Zero-Overhead** — Stateless, no database, no session storage. Sub-200ms response time.
 
 ---
 
-## 🗂️ Project Structure
+## Project Structure
 
 ```
 Aag/
@@ -49,7 +49,7 @@ Aag/
 
 ---
 
-## 🧠 How It Works
+## How It Works
 
 ### Backend — Fire Detection Pipeline (`main.py`)
 
@@ -80,7 +80,7 @@ Aag/
 
 ---
 
-## 🚀 Running the Project
+## Running the Project
 
 ### Prerequisites
 
@@ -124,9 +124,11 @@ This will start a local HTTP server on port **8001** and automatically open the 
 ## 🔌 API Reference
 
 ### `GET /health`
+
 Returns the current server status and detection mode.
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -135,9 +137,11 @@ Returns the current server status and detection mode.
 ```
 
 ### `POST /detect`
+
 Accepts a base64-encoded JPEG image and returns a fire detection result.
 
 **Request Body:**
+
 ```json
 {
   "frame": "data:image/jpeg;base64,/9j/4AAQ..."
@@ -145,6 +149,7 @@ Accepts a base64-encoded JPEG image and returns a fire detection result.
 ```
 
 **Response:**
+
 ```json
 {
   "fire_detected": true,
@@ -158,7 +163,7 @@ Accepts a base64-encoded JPEG image and returns a fire detection result.
 
 ---
 
-## 🤖 Optional: YOLO Model Integration
+## Optional: YOLO Model Integration
 
 To use a custom YOLO fire detection model instead of HSV:
 
@@ -177,33 +182,33 @@ To use a custom YOLO fire detection model instead of HSV:
 
 ---
 
-## 🎨 Tech Stack
+## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | HTML5, React 18 (CDN), Babel Standalone, CSS3 |
-| Backend | Python, FastAPI, Uvicorn |
-| Computer Vision | OpenCV, NumPy |
-| Image Processing | Pillow |
-| Fonts | Google Fonts — Orbitron, Rajdhani, Share Tech Mono |
-| Audio | HTML5 Audio API + Web Audio API (fallback) |
-| AI (Optional) | Ultralytics YOLO |
-
----
-
-## ⚙️ Configuration
-
-| Parameter | Location | Default | Description |
-|-----------|----------|---------|-------------|
-| `CONFIDENCE_THRESHOLD` | `backend/main.py` | `0.20` | Minimum confidence to declare fire |
-| `BACKEND_URL` | `frontend/index.html` | `http://localhost:8000` | Backend API URL |
-| Detection interval | `frontend/index.html` | `1000ms` | Frame capture rate |
-| Frontend port | `frontend/serve.py` | `8001` | Local server port |
-| Backend port | `backend/main.py` | `8000` | FastAPI server port |
+| Layer            | Technology                                         |
+| ---------------- | -------------------------------------------------- |
+| Frontend         | HTML5, React 18 (CDN), Babel Standalone, CSS3      |
+| Backend          | Python, FastAPI, Uvicorn                           |
+| Computer Vision  | OpenCV, NumPy                                      |
+| Image Processing | Pillow                                             |
+| Fonts            | Google Fonts — Orbitron, Rajdhani, Share Tech Mono |
+| Audio            | HTML5 Audio API + Web Audio API (fallback)         |
+| AI (Optional)    | Ultralytics YOLO                                   |
 
 ---
 
-## 🛡️ Notes & Limitations
+## Configuration
+
+| Parameter              | Location              | Default                 | Description                        |
+| ---------------------- | --------------------- | ----------------------- | ---------------------------------- |
+| `CONFIDENCE_THRESHOLD` | `backend/main.py`     | `0.20`                  | Minimum confidence to declare fire |
+| `BACKEND_URL`          | `frontend/index.html` | `http://localhost:8000` | Backend API URL                    |
+| Detection interval     | `frontend/index.html` | `1000ms`                | Frame capture rate                 |
+| Frontend port          | `frontend/serve.py`   | `8001`                  | Local server port                  |
+| Backend port           | `backend/main.py`     | `8000`                  | FastAPI server port                |
+
+---
+
+## Notes & Limitations
 
 - **HSV detection is color-based** and may produce false positives on brightly lit orange/red objects (e.g., sunsets, certain clothing). Adjust the `CONFIDENCE_THRESHOLD` or switch to YOLO for more accuracy.
 - **Camera permission** must be granted by the browser for the live feed to work.
@@ -212,10 +217,10 @@ To use a custom YOLO fire detection model instead of HSV:
 
 ---
 
-## 📄 License
+## License
 
 This project is for educational and research purposes.
 
 ---
 
-> Built with ⚡ by Arvind | PyroWatch (Aag) — AI Fire Detection System
+> Built with by Arvind | PyroWatch (Aag) — AI Fire Detection System
