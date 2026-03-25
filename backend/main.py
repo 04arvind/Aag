@@ -27,19 +27,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# --- Optional YOLO model loader ---
-# Uncomment and configure if you have a YOLO fire model
-# from ultralytics import YOLO
-# model = YOLO("fire_model.pt")
-# USE_YOLO = True
 USE_YOLO = False
-
-
 class FrameRequest(BaseModel):
-    frame: str  # base64-encoded JPEG
-
-
+    frame: str 
 class DetectionResponse(BaseModel):
     fire_detected: bool
     confidence: float
@@ -67,17 +57,12 @@ def detect_fire_hsv(frame: np.ndarray) -> dict:
     """
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    # Fire color ranges in HSV
-    # Lower red range
     lower_red1 = np.array([0, 100, 150])
     upper_red1 = np.array([15, 255, 255])
-    # Upper red range (wraps around 180)
     lower_red2 = np.array([160, 100, 150])
     upper_red2 = np.array([180, 255, 255])
-    # Orange range
     lower_orange = np.array([5, 100, 150])
     upper_orange = np.array([35, 255, 255])
-    # Yellow range
     lower_yellow = np.array([20, 100, 150])
     upper_yellow = np.array([45, 255, 255])
 
@@ -90,7 +75,6 @@ def detect_fire_hsv(frame: np.ndarray) -> dict:
     fire_mask = cv2.bitwise_or(fire_mask, mask_orange)
     fire_mask = cv2.bitwise_or(fire_mask, mask_yellow)
 
-    # Morphological cleanup
     kernel = np.ones((5, 5), np.uint8)
     fire_mask = cv2.morphologyEx(fire_mask, cv2.MORPH_OPEN, kernel)
     fire_mask = cv2.morphologyEx(fire_mask, cv2.MORPH_DILATE, kernel)
@@ -99,16 +83,13 @@ def detect_fire_hsv(frame: np.ndarray) -> dict:
     fire_pixels = np.sum(fire_mask > 0)
     fire_ratio = fire_pixels / total_pixels
 
-    # Brightness check — real fire tends to be very bright
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     bright_pixels = np.sum(gray[fire_mask > 0] > 180) if fire_pixels > 0 else 0
     brightness_ratio = bright_pixels / fire_pixels if fire_pixels > 0 else 0
 
-    # Combined confidence: fire area + brightness factor
     raw_confidence = min(fire_ratio * 10, 1.0)  # scale: 10% coverage = 100% confidence
     adjusted_confidence = raw_confidence * (0.5 + 0.5 * brightness_ratio)
 
-    # Find bounding box
     bbox = None
     if fire_pixels > 100:
         contours, _ = cv2.findContours(fire_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
