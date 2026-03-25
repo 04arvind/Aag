@@ -990,8 +990,8 @@
 
   <script type="text/babel">
     const { useState, useEffect, useRef, useCallback } = React;
-    // const BACKEND_URL = 'https://your-backend-url.railway.app';
-    const BACKEND_URL = 'http://localhost:8000';
+    const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+    const BACKEND_URL = isLocalhost ? 'http://localhost:8000' : window.location.origin;
 
     function LandingPage({ onStart }) {
       const features = [

@@ -121,6 +121,35 @@ This will start a local HTTP server on port **8001** and automatically open the 
 
 ---
 
+## Deploy On Railway
+
+This repository is configured for **single-service Railway deployment**:
+
+- Railway runs the FastAPI backend
+- The backend serves `frontend/index.html` at `/`
+- Audio files are served at `/audio/*`
+- Frontend API calls use same-origin in production
+
+### Steps
+
+1. Push this repo to GitHub.
+2. In Railway, click **New Project** -> **Deploy from GitHub repo**.
+3. Select this repository.
+4. Railway will auto-detect Python and use the included `railway.json`.
+5. Wait for the deployment to finish, then open the generated Railway URL.
+
+### Railway Runtime
+
+- Start command: `uvicorn main:app --host 0.0.0.0 --port $PORT --app-dir backend`
+- Health check endpoint: `/health`
+
+### Notes
+
+- Webcam access requires `https`; Railway URLs are HTTPS by default.
+- If you later split frontend/backend into separate services, update `BACKEND_URL` in `frontend/index.html`.
+
+---
+
 ## 🔌 API Reference
 
 ### `GET /health`
