@@ -990,6 +990,7 @@
 
   <script type="text/babel">
     const { useState, useEffect, useRef, useCallback } = React;
+    // const BACKEND_URL = 'https://your-backend-url.railway.app';
     const BACKEND_URL = 'http://localhost:8000';
 
     function LandingPage({ onStart }) {
@@ -1010,15 +1011,15 @@
                 <path d="M16 2 C16 2, 24 8, 24 16 C24 24, 16 30, 16 30 C16 30, 8 24, 8 16 C8 8, 16 2, 16 2Z" fill="none" stroke="#ff6600" strokeWidth="1.5" />
                 <path d="M16 8 C16 8, 20 12, 20 16 C20 20, 16 26, 16 26 C16 26, 12 20, 12 16 C12 12, 16 8, 16 8Z" fill="#ff6600" opacity="0.6" />
               </svg>
-              PYROWATCH
+              AAG
             </div>
             <div className="nav-status"><span className="status-dot" />SYSTEM ONLINE</div>
           </nav>
           <section className="hero">
-            <div className="hero-badge"><span className="status-dot" style={{ background: 'var(--fire-orange)' }} />POWERED BY COMPUTER VISION + DEEP LEARNING</div>
+            
             <h1 className="hero-title">AI <span className="fire-word">FIRE</span><br />DETECTION<br />SYSTEM</h1>
             <p className="hero-subtitle">Real-Time Intelligent Fire Monitoring</p>
-            <button className="cta-button" onClick={onStart}><span>⬡ START MONITORING</span></button>
+            <button className="cta-button" onClick={onStart}><span>START MONITORING</span></button>
             <div className="hero-stats">
               <div className="stat-item"><div className="stat-value">1s</div><div className="stat-label">Detection Interval</div></div>
               <div className="stat-divider" />
@@ -1030,7 +1031,7 @@
             </div>
           </section>
           <section className="features">
-            <div className="section-header"><div className="section-tag">// CAPABILITIES</div><h2 className="section-title">SYSTEM FEATURES</h2></div>
+            <div className="section-header"><div className="section-tag">CAPABILITIES</div><h2 className="section-title">SYSTEM FEATURES</h2></div>
             <div className="features-grid">
               {features.map((f, i) => (<div key={i} className="feature-card" style={{ animationDelay: `${i * 0.1}s` }}><div className="feature-icon">{f.icon}</div><div className="feature-title">{f.title}</div><p className="feature-desc">{f.desc}</p></div>))}
             </div>
@@ -1191,12 +1192,12 @@
 
       return (
         <div className="dashboard page-enter">
-          <audio ref={audioRef} loop preload="auto"><source src="./public/audio/pieper.mp3" type="audio/mpeg" /></audio>
+          <audio ref={audioRef} loop preload="auto"><source src="./audio/pieper.mp3" type="audio/mpeg" /></audio>
           <AudioFallback audioRef={audioRef} fireDetected={fireDetected} />
           <div className="dash-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
               <button className="back-btn" onClick={() => { stopCamera(); onBack(); }}>← BACK</button>
-              <div className="dash-title">PYROWATCH DASHBOARD</div>
+              <div className="dash-title">AAG DASHBOARD</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
               <div className="backend-indicator">
@@ -1206,7 +1207,7 @@
               <div style={{ fontFamily: 'Share Tech Mono', fontSize: 10, color: 'var(--text-dim)', letterSpacing: 2 }}>FRAMES: {frameCount}</div>
             </div>
           </div>
-          <div className="ticker-bar" style={{ marginBottom: 16 }}><span className="ticker-text">⬡ PYROWATCH ACTIVE — MONITORING ALL ZONES — HSV FIRE DETECTION ENGINE ONLINE — CONFIDENCE THRESHOLD: 20% — REAL-TIME PROCESSING AT 1Hz — NO DATABASE REQUIRED — ALARM READY &nbsp;&nbsp;&nbsp;⬡ PYROWATCH ACTIVE — MONITORING ALL ZONES</span></div>
+          <div className="ticker-bar" style={{ marginBottom: 16 }}><span className="ticker-text">⬡ AAG ACTIVE — MONITORING ALL ZONES — HSV FIRE DETECTION ENGINE ONLINE — CONFIDENCE THRESHOLD: 20% — REAL-TIME PROCESSING AT 1Hz — NO DATABASE REQUIRED — ALARM READY &nbsp;&nbsp;&nbsp;⬡ AAG ACTIVE — MONITORING ALL ZONES</span></div>
           <div className="dash-grid">
             <div className="camera-panel">
               <div className="panel-label"><span className="rec-dot" />LIVE FEED — CAMERA 01 {cameraActive && <span style={{ marginLeft: 'auto', color: 'var(--safe-green)' }}>● RECORDING</span>}</div>
@@ -1229,7 +1230,7 @@
               <div className={`status-card ${fireDetected ? 'fire' : 'safe'}`}>
                 <div className={`fire-banner ${fireDetected ? 'active' : ''}`}>[!] FIRE DETECTED — EVACUATE IMMEDIATELY</div>
                 <div className="status-card-inner">
-                  <div className="status-label">// DETECTION STATUS</div>
+                  <div className="status-label">DETECTION STATUS</div>
                   <div className="status-indicator">
                     <div className={`status-orb ${fireDetected ? 'fire' : 'safe'}`}><div className="status-orb-ring" /><div className="status-orb-inner" /></div>
                     <div className={`status-text-main ${fireDetected ? 'fire' : 'safe'}`}>{fireDetected ? '[!] FIRE DETECTED' : '[OK] NO FIRE DETECTED'}</div>
@@ -1245,7 +1246,7 @@
                 <div className="metric-row"><span className="metric-label">THRESHOLD</span><span className="metric-value">20%</span></div>
               </div>
               <div className="system-card">
-                <div className="metric-label" style={{ marginBottom: 8 }}>// SYSTEM STATUS</div>
+                <div className="metric-label" style={{ marginBottom: 8 }}>SYSTEM STATUS</div>
                 <div className="sys-row"><span className="sys-key">BACKEND API</span><span className={`sys-val ${backendStatus === 'online' ? 'online' : 'offline'}`}>{backendStatus === 'online' ? '● ONLINE' : backendStatus === 'offline' ? '● OFFLINE (DEMO)' : '◌ CHECKING'}</span></div>
                 <div className="sys-row"><span className="sys-key">CAMERA</span><span className={`sys-val ${cameraActive ? 'online' : 'offline'}`}>{cameraActive ? '● ACTIVE' : '○ INACTIVE'}</span></div>
                 <div className="sys-row"><span className="sys-key">ALARM SYSTEM</span><span className="sys-val online">● READY</span></div>
@@ -1253,7 +1254,7 @@
                 <div className="sys-row"><span className="sys-key">TOTAL FRAMES</span><span className="sys-val neutral">{frameCount}</span></div>
               </div>
               <div>
-                <div className="metric-label" style={{ marginBottom: 6, paddingLeft: 4 }}>// EVENT LOG</div>
+                <div className="metric-label" style={{ marginBottom: 6, paddingLeft: 4 }}>EVENT LOG</div>
                 <div className="alert-log">{logs.map((l, i) => (<div key={i} className="log-entry"><span className="log-time">[{l.time}]</span><span className={`log-msg-${l.type}`}>{l.msg}</span></div>))}</div>
               </div>
             </div>
