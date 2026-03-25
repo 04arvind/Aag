@@ -7,10 +7,12 @@ import cv2
 import numpy as np
 import base64
 import logging
-from io import BytesIO
-from PIL import Image
+import os
+from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional
 import uvicorn
@@ -28,6 +30,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 USE_YOLO = False
+model = None
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
+
+
 class FrameRequest(BaseModel):
     frame: str 
 class DetectionResponse(BaseModel):
@@ -146,7 +152,15 @@ def detect_fire_yolo(frame: np.ndarray) -> dict:
 
 @app.get("/")
 async def root():
+    index_path = FRONTEND_DIR / "index.html"
+    if index_path.exists():
+        return FileResponse(index_path)
     return {"status": "online", "service": "AI Fire Detection API", "version": "1.0.0"}
+
+
+audio_dir = FRONTEND_DIR / "audio"
+if audio_dir.exists():
+    app.mount("/audio", StaticFiles(directory=audio_dir), name="audio")
 
 
 @app.get("/health")
@@ -186,4 +200,5 @@ async def detect_fire(request: FrameRequest):
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    port = int(os.environ.get("PORT", "8000"))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
